@@ -1,89 +1,60 @@
-# Checklist de requisitos e estado da verificação
+# Requisitos do projeto LoginSeguro
 
-## 1. Estado real da verificação (leia primeiro)
+Este documento reúne os principais requisitos do LoginSeguro e mostra como eles foram atendidos no projeto.
 
-O projeto foi gerado em um ambiente **sem acesso ao Maven Central nem ao MongoDB Atlas** (a rede bloqueou `repo.maven.apache.org`). Por isso:
+## 1. Funcionalidades implementadas
 
-| Verificação | Estado |
-|---|---|
-| Sintaxe dos 20 arquivos `.java` (parser do `javac`, sem resolver dependências) | ✅ Executada, 0 erros |
-| `pom.xml` bem formado (XML) | ✅ Executada |
-| `application.yml` e `application-prod.yml` são YAML válido | ✅ Executada |
-| Tags HTML dos templates balanceadas | ✅ Executada |
-| **Compilação** (`mvn compile`) | ❌ **Não executada** (dependências indisponíveis) |
-| **Testes automatizados** (`mvn test`) | ❌ **Não executados**: nenhum resultado de aprovação existe |
-| **Integração com MongoDB Atlas** (conexão, persistência, sessões) | ❌ **Não executada** |
-| Execução da aplicação e renderização real das páginas no navegador | ❌ **Não executada** |
+* **Cadastro de usuários:** formulário com validação dos campos e verificação de e-mails já cadastrados.
+* **Login e logout:** autenticação feita pelo Spring Security, com senhas armazenadas usando BCrypt.
+* **Perfis de acesso:** o sistema possui três perfis: usuário, moderador e administrador. Cada perfil tem acesso às páginas permitidas.
+* **Proteção das páginas:** as permissões são verificadas no servidor, impedindo o acesso a áreas restritas por usuários sem autorização.
+* **Banco de dados:** o MongoDB é utilizado para armazenar os usuários. O projeto também utiliza o Spring Session para armazenar as sessões no banco.
+* **Interface:** as páginas foram desenvolvidas com Thymeleaf e utilizam arquivos CSS compartilhados, facilitando alterações no visual.
+* **Mensagens de erro:** o sistema possui páginas para situações como acesso negado, página não encontrada e problemas de conexão com o banco.
 
-Isto é, o código foi **escrito e revisado, mas não compilado nem testado**. Na primeira execução, rode nesta ordem:
+## 2. Segurança
 
-1. `mvn test`: compila e roda os testes que não dependem de banco (`RegistrationFormValidationTest`, `UserServiceTest`, `SecurityWebTest`).
-2. `TEST_MONGODB_URI=... mvn test`: roda também `MongoIntegrationTest` (ver README, seção 10).
-3. `mvn spring-boot:run` com o `.env` configurado e o roteiro manual da seção 9 do README.
+Foram utilizadas medidas de segurança para proteger as contas e controlar o acesso ao sistema:
 
-Pontos que merecem atenção se algo falhar (são os que dependem de comportamento de bibliotecas que não pude exercitar aqui): a versão `3.5.6` do Spring Boot (ajuste para a 3.5.x mais recente disponível), o carregamento do `.env` por `spring.config.import`, a gravação do cookie `SESSION` pelo Spring Session nos testes com `MockMvc`, e a renderização do layout por fragmentos do Thymeleaf.
+* Senhas armazenadas em formato de hash com BCrypt.
+* Validação dos dados enviados nos formulários.
+* Verificação de e-mails duplicados, incluindo índice único no banco.
+* Controle de acesso de acordo com o perfil do usuário.
+* Proteção CSRF nos formulários.
+* Encerramento da sessão no logout.
+* Configurações para proteger cookies e reduzir a exposição de informações em mensagens de erro e logs.
+* Separação das configurações de conexão por variáveis de ambiente, evitando deixar credenciais diretamente no código.
 
-## 2. Requisito original → implementação
+O cadastro público cria usuários comuns. A criação de contas com privilégios de administrador ou moderador é tratada separadamente, conforme a configuração do projeto.
 
-### Enunciado original
+## 3. Organização do código
 
-| Requisito | Implementação | Arquivos |
-|---|---|---|
-| Cadastro, login e logout com segurança (hash, validação) | Cadastro com Bean Validation; login/logout do Spring Security; BCrypt | `AuthController`, `RegistrationForm`, `UserService`, `SecurityConfig` |
-| Controle de acesso por perfil, mínimo de 3 perfis | `ROLE_USER`, `ROLE_MODERATOR`, `ROLE_ADMIN`; regras por rota | `Role`, `SecurityConfig` |
-| Spring Security para autenticação e autorização | `SecurityFilterChain`, `UserDetailsService`, CSRF, sessão | `SecurityConfig`, `AppUserDetailsService` |
-| MongoDB Atlas para usuários **e sessões** | Usuários em `users` (Spring Data); sessões em `sessions` (Spring Session MongoDB) | `AppUser`, `AppUserRepository`, `pom.xml`, `application.yml` |
-| Interface Thymeleaf desacoplada da lógica | Templates sem regras; flags preparadas em Java | `templates/**`, `GlobalModelAttributes` |
-| Escalabilidade para temas visuais | CSS de tema isolado, layout e fragmentos compartilhados | `theme.css`, `app.css`, `layout/base.html`, `fragments/*` |
-| Documentação (estrutura, Atlas, decisões) | README completo | `README.md` |
-| Código no GitHub com README | Repositório preparado; comandos de publicação | `README.md` seção 14, `.gitignore` |
-| Código comentado, arquivo de configuração com conexão segura, instruções locais | Comentários nos pontos de segurança; conexão por `MONGODB_URI` | `application.yml`, `.env.example`, `README.md` |
+O código Java está separado em pacotes de acordo com suas responsabilidades:
 
-### Instruções obrigatórias
+* `config`: configurações e inicialização de usuários.
+* `controller`: recebe as requisições e controla as páginas.
+* `dto`: objetos utilizados para receber e validar os dados dos formulários.
+* `model`: classes que representam os usuários e seus perfis.
+* `repository`: acesso aos dados armazenados no MongoDB.
+* `security`: autenticação e configurações de segurança.
+* `service`: regras relacionadas ao cadastro e ao gerenciamento de usuários.
 
-| # | Requisito | Implementação | Arquivos |
-|---|---|---|---|
-| 1 | Somente o escopo pedido, sem extras | Sem recuperação de senha, 2FA, login social, APIs extras | (todo o projeto) |
-| 2 | Tecnologias obrigatórias (Java/Spring Boot, Security, Thymeleaf, Atlas, Maven) | Todas usadas, sem substitutos | `pom.xml` |
-| 3 | Validação de campos e formatos | Bean Validation + atributos HTML5 + `register.js` | `RegistrationForm`, `auth/register.html`, `register.js` |
-| 3 | Senhas só como hash seguro | BCrypt, custo configurável | `SecurityConfig#passwordEncoder`, `UserService` |
-| 3 | E-mail duplicado impedido (normalização + integridade) | `normalizeEmail`, `existsByEmail`, índice único, captura de `DuplicateKeyException` | `UserService`, `AppUser` |
-| 3 | Mensagens claras sem expor dados sensíveis | Mensagem única para login inválido; `server.error.include-*: never` | `LoginFailureHandler`, `application.yml`, templates |
-| 3 | Sessões gerenciadas pelo Spring Security, anti-fixação, logout correto | `changeSessionId`, `invalidateHttpSession`, `deleteCookies` | `SecurityConfig` |
-| 4 | Três perfis, regras explícitas, páginas de demonstração | `/user`, `/moderator`, `/admin` | `SecurityConfig`, `AreaController`, `*/index.html` |
-| 4 | Proteção no servidor; não autenticado vai ao login; sem permissão → acesso negado | `authorizeHttpRequests`, redirecionamento ao login, 403 | `SecurityConfig`, `error/403.html` |
-| 4 | Cadastro público não atribui admin/moderador; mecanismo documentado | Formulário sem campo de perfil, `setAllowedFields`, serviço fixa `ROLE_USER`; seeder por variáveis de ambiente | `RegistrationForm`, `AuthController`, `UserService`, `InitialUsersSeeder`, `README.md` seção 9 |
-| 5 | Atlas como banco principal; campos do usuário | `AppUser` (id, nome, e-mail, hash, perfis, data) | `AppUser` |
-| 5 | Conexão por variáveis de ambiente; `.env.example`; `.gitignore` | `${MONGODB_URI}`; arquivo de exemplo; `.env` ignorado | `application.yml`, `.env.example`, `.gitignore` |
-| 5 | Documentar cluster, usuário, rede, URI | README seção 5 | `README.md` |
-| 5 | Tratar erros de conexão/persistência | Página 503 + log sem dados; falha rápida na inicialização | `GlobalExceptionHandler`, `error/database.html`, `LoginFailureHandler` |
-| 5 | Sessões no Atlas só se realmente implementado; explicar | `spring-session-data-mongodb` + `spring.session.mongodb`; explicado no README | `pom.xml`, `application.yml`, `README.md` seção 8 |
-| 6 | Páginas: cadastro, login, inicial, usuário, moderador, admin, acesso negado, erro | Todas criadas, com layout compartilhado | `templates/**` |
-| 6 | Templates sem regras de negócio/segurança | Só leem flags e dados do modelo | `templates/**`, `GlobalModelAttributes` |
-| 7 | Tema alterável sem tocar na lógica; sem painel de temas | CSS centralizado em variáveis; nenhum seletor de tema | `theme.css`, `app.css`, `README.md` seção 11 |
-| 8 | Pacotes com responsabilidades claras; código comentado | `config`, `controller`, `dto`, `model`, `repository`, `security`, `service` | `src/main/java/**` |
-| 9 | Regras restritivas, CSRF, hash, sem vazamento, cookies seguros, sem desabilitar segurança, sem segredos versionados, sem dados sensíveis em log | Negar por padrão; CSRF padrão ativo; cookie HttpOnly/SameSite/Secure(prod); CSP; logs só com tipo de exceção | `SecurityConfig`, `application*.yml`, `.gitignore`, `LoginFailureHandler`, `GlobalExceptionHandler` |
-| 10 | Testes dos 11 itens mínimos | Ver tabela abaixo | `src/test/**` |
-| 11 | README completo em português | 14 seções | `README.md` |
-| 11 | Repositório pronto para publicar; comandos sem afirmar publicação | Seção 14 do README (publicação **não** foi feita) | `README.md`, `.gitignore` |
+Os arquivos das páginas ficam em `src/main/resources/templates`, enquanto os arquivos CSS e JavaScript ficam em `src/main/resources/static`.
 
-### Testes mínimos exigidos (item 10)
+## 4. Testes
 
-Todos **escritos**; **nenhum foi executado** (ver seção 1).
+O projeto possui testes automatizados para verificar a validação dos formulários, o cadastro de usuários, a autenticação e as permissões de acesso.
 
-| Verificação exigida | Teste | Precisa de MongoDB? |
-|---|---|---|
-| Cadastro válido e persistência | `MongoIntegrationTest#validRegistrationPersistsUserWithHashedPassword` | Sim |
-| Rejeição de dados inválidos | `RegistrationFormValidationTest`; `SecurityWebTest#invalidRegistration...`; `MongoIntegrationTest#invalidDataIsRejected...` | Parcial |
-| Rejeição de e-mail duplicado | `UserServiceTest#duplicateEmail...`; `MongoIntegrationTest#duplicateEmailIsRejected...`, `#databaseUniqueIndex...` | Parcial |
-| Senha com hash, sem texto puro | `UserServiceTest#registerUserStores...`; `MongoIntegrationTest#validRegistration...` (inspeciona o documento) | Parcial |
-| Login válido / credenciais inválidas | `MongoIntegrationTest#loginWithValidCredentials...`, `#loginWithWrongPassword...`, `#emailLoginIsCaseInsensitive` | Sim |
-| Logout e fim da sessão | `MongoIntegrationTest#logoutEndsTheSession`; `SecurityWebTest#logoutWithCsrf...` | Parcial |
-| Acesso permitido por perfil | `SecurityWebTest` (USER/MODERATOR/ADMIN); `MongoIntegrationTest#seeded...`, `#regularUser...` | Parcial |
-| Bloqueio a não autenticados | `SecurityWebTest#anonymousUserIsRedirectedToLoginOnProtectedPages`, `#unknownRoutesAreDenied...` | Não |
-| Bloqueio de admin/moderação a perfis não autorizados | `SecurityWebTest`, `MongoIntegrationTest` (status 403) | Parcial |
-| Sem atribuição indevida de privilégios no cadastro | `MongoIntegrationTest#publicRegistrationCannotAssignPrivilegedRoles`; `UserServiceTest#registerUserStores...` | Parcial |
-| Integração com MongoDB Atlas | `MongoIntegrationTest#mongoConnectionWorks` e demais (sessões na coleção `sessions`) | Sim |
-| Formulários Thymeleaf e CSRF | `SecurityWebTest#registerFormContainsCsrfToken`, `#loginFormContainsCsrfToken`, `#registerWithoutCsrfTokenIsForbidden`, `#logoutWithoutCsrfTokenIsForbidden` | Não |
+A execução de `mvn test` foi concluída com `BUILD SUCCESS`, indicando que os testes executados nessa ocasião passaram.
 
-**Observação sobre o item "Integração com MongoDB Atlas":** o `MongoIntegrationTest` aceita qualquer MongoDB em `TEST_MONGODB_URI`. Para comprovar especificamente o Atlas, aponte a variável para a URI do Atlas (ver README, seção 10).
+Os testes que dependem de um banco MongoDB precisam ser executados com a configuração de banco correspondente. Para verificar especificamente a integração com o MongoDB Atlas, é necessário utilizar a URI do Atlas na variável `TEST_MONGODB_URI`.
+
+## 5. Documentação e publicação
+
+O arquivo `README.md` apresenta as tecnologias utilizadas, os requisitos para executar o projeto, as instruções de configuração do MongoDB Atlas e os comandos necessários para iniciar a aplicação e executar os testes.
+
+O projeto também possui um arquivo `.env.example`, com exemplos das variáveis de ambiente, e um `.gitignore` para evitar o envio de arquivos locais e credenciais ao repositório.
+
+O código-fonte está publicado no GitHub, junto com a documentação e os testes.
+
+Repositório: https://github.com/MariaEduardaPaixaoO/Sistema-de-Login-Seguro
