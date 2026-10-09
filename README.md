@@ -1,4 +1,4 @@
-# LoginSeguro
+# Login Seguro
 
 O LoginSeguro é um sistema de cadastro e autenticação de usuários desenvolvido com Java e Spring Boot. O projeto utiliza MongoDB Atlas para armazenar os dados e Spring Security para controlar o login e as permissões de acesso.
 
