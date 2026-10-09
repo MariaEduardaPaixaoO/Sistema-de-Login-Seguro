@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>Área do moderador</title>
+</head>
+<body>
+<main class="container">
+    <h1>Área do moderador</h1>
+    <section class="card">
+        <p>Página de demonstração protegida pelo perfil <strong>ROLE_MODERATOR</strong>.</p>
+        <p>Se você está vendo esta página, o servidor autorizou o seu acesso.</p>
+        <a class="btn" th:href="@{/}">Voltar ao início</a>
+    </section>
+</main>
+</body>
+</html>

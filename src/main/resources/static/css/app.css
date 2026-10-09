@@ -1,0 +1,340 @@
+/* Componentes e layout. Cores, fontes e medidas vêm de theme.css (variáveis). */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+}
+
+a {
+    color: var(--color-link);
+}
+
+h1 {
+    margin: 0 0 var(--space-3);
+    font-size: 1.75rem;
+    line-height: 1.2;
+}
+
+h2 {
+    margin: 0 0 var(--space-2);
+    font-size: 1.15rem;
+}
+
+.container {
+    width: 100%;
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: var(--space-4) var(--space-3);
+    flex: 1;
+}
+
+.container--narrow {
+    max-width: var(--container-narrow-width);
+}
+
+.muted {
+    color: var(--color-muted);
+}
+
+/* ---- Cabeçalho / navegação ---- */
+.site-header {
+    background: var(--color-header-bg);
+    color: var(--color-header-text);
+}
+
+.site-header__inner {
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: var(--space-3);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+}
+
+.site-header__brand {
+    color: var(--color-header-text);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.site-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+}
+
+.site-nav a {
+    color: var(--color-header-text);
+    text-decoration: none;
+}
+
+.site-nav a:hover,
+.site-nav a:focus {
+    text-decoration: underline;
+}
+
+.site-nav__logout {
+    margin: 0;
+}
+
+/* ---- Rodapé ---- */
+.site-footer {
+    border-top: 1px solid var(--color-border);
+    color: var(--color-muted);
+    font-size: 0.875rem;
+}
+
+.site-footer__inner {
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: var(--space-3);
+}
+
+.site-footer p {
+    margin: 0;
+}
+
+/* ---- Cartões ---- */
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: var(--space-4);
+    margin-bottom: var(--space-3);
+}
+
+.card p:first-child {
+    margin-top: 0;
+}
+
+/* ---- Formulários ---- */
+.form__group {
+    margin-bottom: var(--space-3);
+}
+
+.form label {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-weight: 600;
+}
+
+.form input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+}
+
+.form input:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+}
+
+.hint {
+    margin: var(--space-1) 0 0;
+    color: var(--color-muted);
+    font-size: 0.875rem;
+}
+
+.field-error {
+    margin: var(--space-1) 0 0;
+    color: var(--color-danger);
+    font-size: 0.875rem;
+}
+
+/* ---- Botões ---- */
+.btn {
+    display: inline-block;
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn:hover {
+    border-color: var(--color-primary);
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-contrast);
+}
+
+.btn-primary:hover {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+}
+
+.btn-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-header-text);
+}
+
+.btn-link:hover,
+.btn-link:focus {
+    text-decoration: underline;
+    border: 0;
+}
+
+/* ---- Alertas ---- */
+.alert {
+    margin-bottom: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+}
+
+.alert-success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border-color: var(--color-success);
+}
+
+.alert-error {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+
+/* ---- Perfis e áreas ---- */
+.badges,
+.area-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.badge {
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
+    font-size: 0.875rem;
+}
+
+.area-list li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-2);
+}
+
+.tag {
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.tag-ok {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.tag-denied {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+/*  Responsivo  */
+@media (max-width: 600px) {
+    h1 {
+        font-size: 1.4rem;
+    }
+
+    .card {
+        padding: var(--space-3);
+    }
+
+    .site-header__inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+
+/*  Visualização de senha ---- */
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 3rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0.35rem;
+    border: none;
+    border-radius: 0.375rem;
+    background: transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+}
+
+.password-toggle:hover {
+    color: var(--color-text);
+}
+
+.password-toggle:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.password-toggle svg {
+    width: 1.35rem;
+    height: 1.35rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}

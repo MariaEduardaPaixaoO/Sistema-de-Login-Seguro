@@ -1,0 +1,14 @@
+# Perfil de produção: SPRING_PROFILES_ACTIVE=prod
+# Requer a aplicação atrás de HTTPS (ex.: proxy reverso/terminação TLS na plataforma).
+server:
+  # Respeita X-Forwarded-Proto/-For enviados pelo proxy reverso confiável.
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        secure: true
+        same-site: lax
+
+spring:
+  thymeleaf:
+    cache: true

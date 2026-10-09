@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>Serviço indisponível</title>
+</head>
+<body>
+<main class="container container--narrow">
+    <h1>Serviço temporariamente indisponível</h1>
+    <section class="card">
+        <p>Não foi possível concluir a operação agora. Tente novamente em instantes.</p>
+        <a class="btn" th:href="@{/}">Voltar ao início</a>
+    </section>
+</main>
+</body>
+</html>

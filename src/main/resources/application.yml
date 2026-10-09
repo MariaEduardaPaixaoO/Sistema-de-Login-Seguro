@@ -1,0 +1,57 @@
+# Configuração base (comportamento de desenvolvimento local).
+# Para produção, ative o perfil "prod" (SPRING_PROFILES_ACTIVE=prod): ver application-prod.yml.
+spring:
+  application:
+    name: login-seguro
+
+  # Lê o arquivo ./.env (formato CHAVE=valor) quando existir. Variáveis de ambiente
+  # do sistema continuam tendo precedência. O .env NÃO é versionado.
+  config:
+    import: "optional:file:./.env[.properties]"
+
+  data:
+    mongodb:
+      # Obrigatória: sem MONGODB_URI a aplicação não inicia (evita cair silenciosamente em localhost).
+      uri: ${MONGODB_URI}
+      database: ${MONGODB_DATABASE:login_seguro}
+      # Cria o índice único de e-mail (@Indexed) automaticamente.
+      auto-index-creation: true
+
+  session:
+    # Sessões ficam na coleção "sessions" do MongoDB (spring-session-data-mongodb).
+    # A expiração é feita por índice TTL criado pelo Spring Session.
+    timeout: 30m
+    mongodb:
+      collection-name: sessions
+
+server:
+  servlet:
+    session:
+      cookie:
+        name: SESSION
+        http-only: true
+        # Em desenvolvimento (http://localhost) o cookie não pode ser "secure".
+        # O perfil "prod" liga secure=true.
+        secure: false
+        same-site: lax
+  error:
+    # Não expõe mensagens internas, stack traces ou detalhes de validação nas páginas de erro.
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+    include-exception: false
+
+app:
+  security:
+    # Custo do BCrypt (fator de trabalho). 12 é um bom padrão atual.
+    bcrypt-strength: 12
+  bootstrap:
+    # Contas iniciais com perfis privilegiados (opcionais). Ver README.
+    admin:
+      name: ${BOOTSTRAP_ADMIN_NAME:Administrador}
+      email: ${BOOTSTRAP_ADMIN_EMAIL:}
+      password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+    moderator:
+      name: ${BOOTSTRAP_MODERATOR_NAME:Moderador}
+      email: ${BOOTSTRAP_MODERATOR_EMAIL:}
+      password: ${BOOTSTRAP_MODERATOR_PASSWORD:}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- As flags (authenticated, canAccess*) são calculadas em Java (GlobalModelAttributes). -->
+<header th:fragment="header" class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" th:href="@{/}">Login Seguro</a>
+        <nav class="site-nav" aria-label="Navegação principal">
+            <th:block th:if="${authenticated}">
+                <a th:href="@{/}">Início</a>
+                <a th:if="${canAccessUser}" th:href="@{/user}">Usuário</a>
+                <a th:if="${canAccessModerator}" th:href="@{/moderator}">Moderação</a>
+                <a th:if="${canAccessAdmin}" th:href="@{/admin}">Administração</a>
+                <!-- Logout é POST; th:action inclui o token CSRF automaticamente. -->
+                <form th:action="@{/logout}" method="post" class="site-nav__logout">
+                    <button type="submit" class="btn btn-link">Sair</button>
+                </form>
+            </th:block>
+            <th:block th:unless="${authenticated}">
+                <a th:href="@{/login}">Entrar</a>
+                <a th:href="@{/register}">Cadastrar</a>
+            </th:block>
+        </nav>
+    </div>
+</header>
+</body>
+</html>

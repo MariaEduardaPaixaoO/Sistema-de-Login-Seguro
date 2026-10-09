@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>Início</title>
+</head>
+<body>
+<main class="container">
+    <h1>Olá, <span th:text="${displayName}">Usuário</span></h1>
+    <p class="muted">Você está autenticado como <strong th:text="${email}">email@exemplo.com</strong>.</p>
+
+    <section class="card">
+        <h2>Seus perfis</h2>
+        <ul class="badges">
+            <li class="badge" th:each="role : ${roles}" th:text="${role}">ROLE_USER</li>
+        </ul>
+    </section>
+
+    <section class="card">
+        <h2>Áreas de demonstração</h2>
+        <p>
+            Cada área é protegida no servidor. Você pode abrir qualquer uma delas: se o seu perfil
+            não for autorizado, o servidor responde com "Acesso negado" (403).
+        </p>
+        <ul class="area-list">
+            <li>
+                <a class="btn" th:href="@{/user}">Área do usuário</a>
+                <span class="tag" th:classappend="${canAccessUser} ? 'tag-ok' : 'tag-denied'"
+                      th:text="${canAccessUser} ? 'Permitido' : 'Negado'">Permitido</span>
+            </li>
+            <li>
+                <a class="btn" th:href="@{/moderator}">Área do moderador</a>
+                <span class="tag" th:classappend="${canAccessModerator} ? 'tag-ok' : 'tag-denied'"
+                      th:text="${canAccessModerator} ? 'Permitido' : 'Negado'">Negado</span>
+            </li>
+            <li>
+                <a class="btn" th:href="@{/admin}">Área do administrador</a>
+                <span class="tag" th:classappend="${canAccessAdmin} ? 'tag-ok' : 'tag-denied'"
+                      th:text="${canAccessAdmin} ? 'Permitido' : 'Negado'">Negado</span>
+            </li>
+        </ul>
+    </section>
+</main>
+</body>
+</html>

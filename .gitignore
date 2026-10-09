@@ -1,0 +1,30 @@
+# Build
+target/
+*.class
+*.jar
+*.war
+
+# Credenciais e configurações locais (NUNCA versionar)
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+application-local.properties
+*.pem
+*.key
+
+# Logs
+*.log
+logs/
+
+# IDEs e sistema operacional
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+.DS_Store
+Thumbs.db
+HELP.md

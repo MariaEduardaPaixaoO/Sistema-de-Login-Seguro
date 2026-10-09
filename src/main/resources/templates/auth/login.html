@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>Entrar</title>
+</head>
+<body>
+<main class="container container--narrow">
+    <h1>Entrar</h1>
+
+    <div class="alert alert-success" role="status" th:if="${param.registered}">
+        Cadastro realizado com sucesso. Faça login para continuar.
+    </div>
+    <div class="alert alert-success" role="status" th:if="${param.logout}">
+        Você saiu da sua conta com sucesso.
+    </div>
+    <div class="alert alert-error" role="alert" th:if="${param.error}">
+        E-mail ou senha inválidos.
+    </div>
+    <div class="alert alert-error" role="alert" th:if="${param.unavailable}">
+        Serviço temporariamente indisponível. Tente novamente em instantes.
+    </div>
+
+    <form class="card form" th:action="@{/login}" method="post">
+        <div class="form__group">
+            <label for="email">E-mail</label>
+            <input id="email" name="email" type="email" required maxlength="254"
+                   autocomplete="username" autofocus>
+        </div>
+
+        <div class="form__group">
+            <label for="password">Senha</label>
+
+            <div class="password-wrapper">
+                <input id="password" name="password" type="password" required maxlength="64"
+                       autocomplete="current-password">
+
+                <button type="button" class="password-toggle"
+                        aria-label="Mostrar senha"
+                        aria-pressed="false"
+                        data-password-toggle="password">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Entrar</button>
+    </form>
+
+    <p class="muted">Ainda não tem conta? <a th:href="@{/register}">Cadastre-se</a>.</p>
+
+
+    <script th:src="@{/js/password-toggle.js}" defer></script>
+</main>
+
+
+
+</body>
+</html>
