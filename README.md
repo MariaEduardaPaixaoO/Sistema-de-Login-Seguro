@@ -1,293 +1,188 @@
-# Login Seguro
+# LoginSeguro
 
-Sistema **genérico** de cadastro, autenticação e autorização de usuários, feito com Java, Spring Boot, Spring Security, Thymeleaf e MongoDB Atlas. Foi pensado como base reutilizável: para adaptá-lo ao tema de outro projeto (por exemplo, um PFC), basta trocar o visual e adicionar as páginas de negócio; a lógica de segurança e de persistência não precisa mudar.
+O LoginSeguro é um sistema de cadastro e autenticação de usuários desenvolvido com Java e Spring Boot. O projeto utiliza MongoDB Atlas para armazenar os dados e Spring Security para controlar o login e as permissões de acesso.
 
-## 1. Objetivo e escopo
+A ideia é ter uma estrutura de login que possa ser utilizada em outros projetos, permitindo alterar o visual e acrescentar novas páginas sem precisar refazer toda a parte de autenticação.
 
-**Inclui:**
+## Tecnologias utilizadas
 
-- Cadastro de usuários com validação no servidor e no navegador.
-- Login e logout com Spring Security, senhas com hash BCrypt.
-- Três perfis (`ROLE_USER`, `ROLE_MODERATOR`, `ROLE_ADMIN`) com controle de acesso por rota, no servidor.
-- Usuários **e sessões HTTP** guardados no MongoDB Atlas.
-- Interface Thymeleaf responsiva, com tema isolado em CSS para troca futura.
-- Testes automatizados.
+* Java 17 ou superior
+* Spring Boot
+* Spring Security
+* Thymeleaf
+* MongoDB Atlas
+* Spring Data MongoDB
+* Spring Session
+* Maven
+* JUnit e Mockito para os testes
 
-**Não inclui (de propósito):** recuperação de senha por e-mail, 2FA, login social, notificações, APIs REST extras, painel de gerenciamento de usuários ou seletor de temas.
+## Funcionalidades
 
-## 2. Tecnologias
+O sistema possui:
 
-| Tecnologia | Uso | Versão |
-|---|---|---|
-| Java | Linguagem | 17 ou superior (compila com `release 17`) |
-| Spring Boot | Base da aplicação | 3.5.6 (gerencia as versões das demais bibliotecas) |
-| Spring Security | Autenticação, autorização, CSRF, sessão | gerenciada pelo Boot |
-| Thymeleaf | Páginas HTML no servidor | gerenciada pelo Boot |
-| Spring Data MongoDB | Persistência dos usuários | gerenciada pelo Boot |
-| Spring Session Data MongoDB | Sessões HTTP no MongoDB | gerenciada pelo Boot |
-| Bean Validation (Hibernate Validator) | Validação no servidor | gerenciada pelo Boot |
-| MongoDB Atlas | Banco de dados | — |
-| Maven | Build e execução | 3.9 ou superior |
-| JUnit 5, Mockito, Spring Security Test | Testes | gerenciadas pelo Boot |
+* Cadastro de usuários com validação dos dados.
+* Login e logout.
+* Senhas armazenadas com hash BCrypt.
+* Três perfis de acesso: usuário, moderador e administrador.
+* Páginas específicas para cada perfil.
+* Controle de acesso às páginas protegidas.
+* Armazenamento de usuários e sessões no MongoDB.
+* Interface adaptável, com estilos organizados em arquivos CSS.
+* Testes automatizados das funcionalidades principais.
 
-Se, no futuro, uma versão mais nova do Spring Boot 3.5.x estiver disponível, basta atualizar o `<version>` do parent no `pom.xml`.
+O projeto não possui recuperação de senha, autenticação em duas etapas ou login por redes sociais, pois essas funcionalidades não fazem parte do escopo atual.
 
-## 3. Requisitos de ambiente
+## Organização do projeto
 
-- JDK 17 ou superior (`java -version`)
-- Maven 3.9 ou superior (`mvn -version`)
-- Uma conta gratuita no [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (ver seção 5)
-- Acesso à internet para baixar dependências e acessar o Atlas
-- Git (para clonar/publicar)
+Os arquivos estão organizados por responsabilidade:
 
-## 4. Estrutura do projeto
+* `config`: configurações e criação inicial de usuários privilegiados.
+* `controller`: controla as requisições e as páginas.
+* `dto`: recebe e valida os dados dos formulários.
+* `model`: representa os usuários e seus perfis.
+* `repository`: acesso aos dados do MongoDB.
+* `security`: configurações de autenticação e autorização.
+* `service`: regras relacionadas aos usuários.
+* `src/main/resources/templates`: páginas HTML com Thymeleaf.
+* `src/main/resources/static`: arquivos CSS e JavaScript.
+* `src/test`: testes automatizados.
 
-```
-login-seguro/
-├── pom.xml
-├── .env.example                      # modelo das variáveis de ambiente (valores ilustrativos)
-├── .gitignore                        # ignora .env, target/, IDEs etc.
-├── README.md
-├── docs/CHECKLIST_REQUISITOS.md      # requisito -> implementação -> arquivos + estado da verificação
-└── src/
-    ├── main/
-    │   ├── java/com/example/loginseguro/
-    │   │   ├── LoginSeguroApplication.java      # ponto de entrada
-    │   │   ├── config/InitialUsersSeeder.java   # atribuição inicial de ADMIN/MODERATOR
-    │   │   ├── controller/                      # controladores MVC
-    │   │   │   ├── AuthController.java          #   /login (tela) e /register
-    │   │   │   ├── AreaController.java          #   /, /user, /moderator, /admin
-    │   │   │   ├── GlobalModelAttributes.java   #   flags de menu para as views
-    │   │   │   └── GlobalExceptionHandler.java  #   falha de banco -> página 503
-    │   │   ├── dto/RegistrationForm.java        # formulário + regras de validação
-    │   │   ├── model/{AppUser,Role}.java        # documento "users" e perfis
-    │   │   ├── repository/AppUserRepository.java
-    │   │   ├── security/
-    │   │   │   ├── SecurityConfig.java          #   regras de acesso, login, logout, sessão, CSP, BCrypt
-    │   │   │   ├── AppUserDetailsService.java   #   carrega usuário do MongoDB para o Spring Security
-    │   │   │   ├── LoginFailureHandler.java     #   credencial inválida x falha interna
-    │   │   │   └── AuthenticationUtils.java
-    │   │   └── service/                         # regras de negócio (UserService)
-    │   └── resources/
-    │       ├── application.yml                  # configuração (usa variáveis de ambiente)
-    │       ├── application-prod.yml             # ajustes de produção
-    │       ├── static/css/theme.css             # TEMA: só variáveis (cores, fontes, medidas)
-    │       ├── static/css/app.css               # componentes (usa as variáveis do tema)
-    │       ├── static/js/register.js            # validação de conveniência no navegador
-    │       └── templates/
-    │           ├── layout/base.html             # layout compartilhado
-    │           ├── fragments/{header,footer}.html
-    │           ├── auth/{login,register}.html
-    │           ├── home.html
-    │           ├── user/index.html  moderator/index.html  admin/index.html
-    │           └── error/{403,404,database}.html  error.html
-    └── test/java/com/example/loginseguro/
-        ├── dto/RegistrationFormValidationTest.java   # sem Spring, sem banco
-        ├── service/UserServiceTest.java              # sem banco (repositório simulado)
-        ├── security/SecurityWebTest.java             # camada web + Security, sem banco
-        └── MongoIntegrationTest.java                 # exige um MongoDB real (TEST_MONGODB_URI)
-```
+O arquivo `pom.xml` contém as dependências utilizadas pelo projeto.
 
-## 5. Configurando o MongoDB Atlas
+## Requisitos para executar
 
-Os nomes de menus do Atlas mudam de tempos em tempos; se algo estiver em outro lugar, procure pelo equivalente.
+Antes de iniciar, instale:
 
-1. **Conta e projeto:** crie uma conta em <https://www.mongodb.com/cloud/atlas> e um projeto (por exemplo, `login-seguro`).
-2. **Cluster:** em *Create / Build a Database*, escolha o plano gratuito (**M0**), um provedor e uma região próxima, e crie o cluster (leva alguns minutos).
-3. **Usuário de banco de dados** (diferente da sua conta Atlas): em *Security → Database Access → Add New Database User*:
-   - método *Password*, defina nome de usuário e uma senha forte (use o gerador do Atlas);
-   - em *Database User Privileges*, prefira o privilégio mínimo: *Specific Privileges → `readWrite` no banco `login_seguro`* (o mesmo valor de `MONGODB_DATABASE`);
-   - evite senhas com caracteres especiais, ou use a versão URL-encoded delas na URI.
-4. **Acesso de rede:** em *Security → Network Access → Add IP Address*, adicione o IP de onde a aplicação vai rodar (*Add Current IP Address* para desenvolvimento). Evite `0.0.0.0/0` (qualquer IP), a não ser temporariamente e consciente do risco.
-5. **URI de conexão:** em *Database → Connect → Drivers* (Java), copie a URI `mongodb+srv://...` e troque `<db_password>` pela senha do usuário criado no passo 3.
-6. Coloque a URI no arquivo `.env` (próxima seção). **Nunca** a coloque no código nem no GitHub.
+* JDK 17 ou superior.
+* Maven 3.9 ou superior.
+* Uma conta no [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
 
-O banco e as coleções (`users`, `sessions`) são criados automaticamente no primeiro uso, assim como o índice único de e-mail e o índice TTL das sessões.
+Também é necessário ter acesso à internet para baixar as dependências e conectar ao banco de dados.
 
-## 6. Variáveis de ambiente
+## Configurando o MongoDB Atlas
 
-| Variável | Obrigatória | Descrição |
-|---|---|---|
-| `MONGODB_URI` | **Sim** | URI de conexão do Atlas |
-| `MONGODB_DATABASE` | Não (padrão `login_seguro`) | Nome do banco |
-| `BOOTSTRAP_ADMIN_NAME` / `_EMAIL` / `_PASSWORD` | Não | Conta inicial de administrador (ver seção 9) |
-| `BOOTSTRAP_MODERATOR_NAME` / `_EMAIL` / `_PASSWORD` | Não | Conta inicial de moderador |
-| `SPRING_PROFILES_ACTIVE` | Não | Use `prod` em produção (cookie `Secure`, proxy reverso) |
-| `TEST_MONGODB_URI` | Só para testes de integração | URI de um MongoDB de **teste** |
+1. Crie uma conta no MongoDB Atlas e um projeto.
+2. Crie um cluster. Para desenvolvimento, o plano gratuito pode ser suficiente.
+3. Em **Database Access**, crie um usuário e uma senha para a conexão com o banco.
+4. Em **Network Access**, autorize o endereço IP da máquina em que a aplicação será executada.
+5. Abra a opção de conexão do cluster, selecione Java e copie a URI disponibilizada.
+6. Substitua os dados de exemplo pelos dados do seu usuário de banco.
 
-Duas formas de configurar (a aplicação aceita as duas):
+Evite liberar o acesso a partir de qualquer endereço IP sem necessidade. A URI contém credenciais e não deve ser publicada no GitHub.
+
+## Configurando as variáveis de ambiente
+
+Na pasta principal do projeto, existe o arquivo `.env.example` com os nomes das variáveis utilizadas.
+
+Copie o arquivo para criar sua configuração local:
 
 ```bash
-# Forma 1: arquivo .env na raiz do projeto (já está no .gitignore)
 cp .env.example .env
-# edite o .env com seus valores reais
-
-# Forma 2: variáveis de ambiente do sistema (têm precedência sobre o .env)
-export MONGODB_URI='mongodb+srv://USUARIO:SENHA@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority&serverSelectionTimeoutMS=5000'
-export MONGODB_DATABASE='login_seguro'
 ```
 
-Se `MONGODB_URI` não estiver definida, a aplicação **não inicia** (propositalmente, para não conectar em silêncio a um banco local).
+Abra o `.env` e preencha os valores necessários. A variável principal é:
 
-## 7. Executando localmente
+```env
+MONGODB_URI=mongodb+srv://...
+MONGODB_DATABASE=login_seguro
+```
+
+Para criar as contas iniciais de administrador e moderador, também podem ser utilizadas as variáveis `BOOTSTRAP_ADMIN_*` e `BOOTSTRAP_MODERATOR_*`. Os detalhes estão na seção de perfis de acesso.
+
+**Não envie o arquivo `.env` para o GitHub.** Ele contém configurações locais e pode guardar senhas reais. O `.gitignore` do projeto já está preparado para ignorá-lo.
+
+> Observação: a aplicação precisa estar configurada para carregar o arquivo `.env`. Caso o carregamento não esteja implementado, configure as variáveis diretamente no ambiente antes de iniciar o sistema.
+
+## Executando a aplicação
+
+Clone o repositório e entre na pasta do projeto:
 
 ```bash
-git clone <URL-DO-SEU-REPOSITORIO>
-cd login-seguro
-cp .env.example .env        # edite o .env
+git clone https://github.com/MariaEduardaPaixaoO/Sistema-de-Login-Seguro.git
+cd Sistema-de-Login-Seguro
+```
+
+Configure as variáveis de ambiente e execute:
+
+```bash
 mvn spring-boot:run
 ```
 
-Acesse <http://localhost:8080>. Você será levado à tela de login; use *Cadastrar* para criar uma conta.
+Depois, acesse:
 
-Para gerar o JAR: `mvn clean package` e depois `java -jar target/login-seguro-1.0.0.jar` (execute na raiz do projeto para que o `.env` seja encontrado, ou use variáveis de ambiente).
+http://localhost:8080
 
-Se o Atlas estiver inacessível ou as credenciais estiverem erradas, a aplicação falha na inicialização (a conexão é verificada ao criar os índices) e mostra o erro no console. Confira usuário/senha, a lista de IPs liberados e a URI.
+A página inicial permite acessar o login e o cadastro de usuários.
 
-## 8. Como funcionam autenticação, autorização, sessões e senhas
+Para gerar o arquivo JAR, utilize:
 
-### Cadastro e validação
-- O formulário (`RegistrationForm`) é validado **no servidor** com Bean Validation: nome obrigatório (até 100), e-mail em formato válido (até 254), senha de 8 a 64 caracteres com ao menos uma letra e um número, e confirmação igual à senha.
-- No navegador há validação de conveniência (atributos HTML5 e `register.js`), mas o servidor nunca confia nela.
-- **E-mail:** é normalizado (espaços removidos, Unicode NFKC, minúsculas) no cadastro **e** no login. A unicidade é garantida por um **índice único** no MongoDB (`@Indexed(unique = true)`): mesmo duas requisições simultâneas não criam e-mails duplicados (a exceção do banco é convertida em mensagem amigável).
+```bash
+mvn clean package
+```
 
-### Senhas
-- Armazenadas **somente** como hash **BCrypt** (com sal embutido; custo configurável em `app.security.bcrypt-strength`, padrão 12).
-- A senha em texto puro nunca é salva, registrada em log, nem reenviada ao navegador (o campo de senha não é reexibido após erro). O hash também não aparece em páginas, `toString()` ou mensagens de erro.
+O arquivo gerado ficará na pasta `target/`.
 
-### Login e logout
-- `POST /login` é processado pelo Spring Security (campos `email` e `password`).
-- Credenciais inválidas e usuário inexistente geram **a mesma mensagem** ("E-mail ou senha inválidos"). Se o banco estiver fora do ar, aparece "serviço indisponível" (e não "senha inválida").
-- `POST /logout` (protegido por CSRF) invalida a sessão no servidor, limpa a autenticação e remove o cookie.
+## Perfis de acesso
 
-### Sessões (persistidas no MongoDB Atlas)
-- **Implementado de fato:** a dependência `spring-session-data-mongodb` está no `pom.xml` e é auto-configurada pelo Spring Boot. As sessões HTTP ficam na coleção **`sessions`** do mesmo banco, com expiração por índice TTL (30 minutos de inatividade: `spring.session.timeout`).
-- O contexto de segurança (usuário e perfis) é gravado na sessão por serialização Java; por isso a aplicação usa o `User` padrão do Spring Security como principal (é serializável).
-- O navegador recebe só um cookie `SESSION` com o identificador. Configuração do cookie: `HttpOnly`, `SameSite=Lax`, e `Secure` no perfil `prod`.
-- **Fixação de sessão:** o ID da sessão é trocado ao autenticar (`changeSessionId`).
-- Efeito prático: reiniciar a aplicação não derruba os logins, e várias instâncias podem compartilhar as sessões.
-- A persistência de **sessões** é independente da de **usuários** (coleções `sessions` e `users`, mecanismos diferentes).
+O sistema possui três perfis:
 
-### Autorização
-Em `SecurityConfig`, de forma explícita e restritiva (`anyRequest().denyAll()` ao final):
+| Perfil           | Acesso                |
+| ---------------- | --------------------- |
+| `ROLE_USER`      | Área do usuário       |
+| `ROLE_MODERATOR` | Área do moderador     |
+| `ROLE_ADMIN`     | Área do administrador |
 
-| Rota | Quem acessa |
-|---|---|
-| `/login`, `/register`, `/css/**`, `/js/**`, `/error` | Público |
-| `/` | Qualquer usuário autenticado |
-| `/user/**` | `ROLE_USER` |
-| `/moderator/**` | `ROLE_MODERATOR` |
-| `/admin/**` | `ROLE_ADMIN` |
-| Qualquer outra rota | Negada |
+Todo cadastro público cria uma conta com o perfil de usuário comum. Não é possível escolher o perfil de administrador ou moderador pelo formulário.
 
-- Não autenticado em rota protegida → redirecionado para `/login`.
-- Autenticado sem permissão → **HTTP 403** com a página `error/403.html` ("Acesso negado").
-- A checagem é feita no servidor em toda requisição; esconder um link no menu é só conveniência de interface.
-- **CSRF** está ativo: todo formulário `POST` (cadastro, login, logout) leva o token oculto (inserido automaticamente pelo `th:action`). Sem token, a resposta é 403.
-- Cabeçalho `Content-Security-Policy` restrito ao próprio servidor (sem scripts nem estilos inline).
+As contas privilegiadas podem ser criadas inicialmente por meio das variáveis de ambiente descritas no `.env.example`. O cadastro inicial não altera automaticamente as permissões de uma conta que já existe.
 
-## 9. Perfis, atribuição inicial e como testar
+As permissões são verificadas pelo Spring Security no servidor. Portanto, tentar abrir diretamente uma página restrita não permite contornar as regras de acesso.
 
-| Perfil | Permissões | Como é obtido |
-|---|---|---|
-| `ROLE_USER` | Área do usuário (`/user`) | Automaticamente em todo cadastro público |
-| `ROLE_MODERATOR` | Área do moderador (`/moderator`) | Atribuição inicial (abaixo). A conta criada recebe `USER` + `MODERATOR` |
-| `ROLE_ADMIN` | Área do administrador (`/admin`) | Atribuição inicial (abaixo). A conta criada recebe `USER` + `MODERATOR` + `ADMIN` |
+## Segurança
 
-Cada área exige exatamente o seu perfil; por isso o administrador recebe os três perfis, para poder visitar todas as áreas.
+O projeto utiliza BCrypt para armazenar as senhas em formato de hash. Também possui validação dos formulários, proteção CSRF, controle de sessão e restrições de acesso por perfil.
 
-### Como os perfis privilegiados são atribuídos
-1. O **cadastro público nunca aceita perfil**: `RegistrationForm` nem tem esse campo, o controlador só aceita `name`, `email`, `password` e `confirmPassword`, e o serviço sempre cria `ROLE_USER`.
-2. **Contas iniciais por variáveis de ambiente:** defina `BOOTSTRAP_ADMIN_EMAIL`/`_PASSWORD` (e/ou `BOOTSTRAP_MODERATOR_*`) antes de iniciar. Na inicialização, `InitialUsersSeeder` cria a conta **somente se aquele e-mail ainda não existir**. Ele nunca promove um usuário existente nem altera senhas. Senha com no mínimo 8 caracteres. As variáveis podem ser removidas depois do primeiro uso.
-3. **Alternativa manual:** no Atlas (*Browse Collections → `users`*), edite o campo `roles` do usuário, por exemplo para `["ROLE_USER", "ROLE_MODERATOR"]`. O usuário precisa fazer login de novo.
+As mensagens de login inválido não informam se o erro ocorreu no e-mail ou na senha. As configurações de cookies também incluem proteções específicas, com o uso de `Secure` no perfil de produção.
 
-### Roteiro manual de teste das permissões
-1. Defina `BOOTSTRAP_ADMIN_*` e `BOOTSTRAP_MODERATOR_*` no `.env` e inicie a aplicação.
-2. Cadastre um usuário comum em `/register` e faça login: a página inicial mostra `ROLE_USER`; `/user` abre; `/moderator` e `/admin` retornam "Acesso negado" (403).
-3. Saia, entre como moderador: `/user` e `/moderator` abrem; `/admin` retorna 403.
-4. Saia, entre como administrador: as três áreas abrem.
-5. Sem login, acesse `/admin` diretamente: você é levado a `/login`.
-6. Tente cadastrar de novo o mesmo e-mail (inclusive com maiúsculas): o sistema recusa.
+As sessões são armazenadas no MongoDB por meio do Spring Session, separadamente dos documentos dos usuários.
 
-## 10. Testes
+## Executando os testes
+
+Para executar os testes automatizados, utilize:
 
 ```bash
 mvn test
 ```
 
-| Tipo | Classe | Precisa de banco? |
-|---|---|---|
-| Validação do cadastro | `RegistrationFormValidationTest` | Não |
-| Regras de serviço (normalização, hash, duplicidade, perfil único no cadastro) | `UserServiceTest` | Não |
-| Autorização por rota, redirecionamento ao login, 403, CSRF, formulários | `SecurityWebTest` | Não |
-| Persistência, e-mail duplicado, hash no banco, login/logout, sessões no MongoDB, perfis iniciais, mass assignment | `MongoIntegrationTest` | **Sim** |
+O projeto possui testes para validação dos formulários, regras de cadastro, autenticação, permissões de acesso e integração com o MongoDB.
 
-O `MongoIntegrationTest` só roda se `TEST_MONGODB_URI` estiver definida; sem ela, o JUnit o marca como **ignorado**. Ele cria um banco temporário próprio (`login_seguro_test_<uuid>`) e o apaga no final, sem tocar no banco da aplicação.
+Os testes unitários e web não dependem de um banco real. Já os testes de integração precisam de um MongoDB configurado por meio da variável `TEST_MONGODB_URI`.
+
+Exemplo com um MongoDB local:
 
 ```bash
-# Contra um MongoDB local descartável (requer Docker)
-docker run -d --name mongo-test -p 27017:27017 mongo:7
 TEST_MONGODB_URI='mongodb://localhost:27017' mvn test
-
-# Ou contra o Atlas (o usuário precisa poder criar/apagar bancos, ex.: "Read and write to any database")
-TEST_MONGODB_URI='mongodb+srv://USUARIO:SENHA@cluster0.xxxxx.mongodb.net/' mvn test
 ```
 
-## 11. Adaptando o tema visual sem mexer na lógica
+Para testar a integração com o Atlas, configure `TEST_MONGODB_URI` com a URI de um banco destinado aos testes. O usuário utilizado precisa ter as permissões necessárias para criar e remover o banco temporário.
 
-A interface foi separada em camadas para que o visual possa mudar sem tocar em segurança, autorização ou persistência:
+## Alterando o visual
 
-1. **Cores, fontes e medidas:** edite `static/css/theme.css` (somente variáveis CSS). É o jeito mais rápido de trocar a identidade visual.
-2. **Aparência dos componentes:** `static/css/app.css` usa apenas as variáveis do tema. Para um tema totalmente novo, crie outro arquivo CSS e troque o `<link>` em `templates/layout/base.html`.
-3. **Estrutura do site:** `templates/layout/base.html` (esqueleto), `fragments/header.html` e `fragments/footer.html` (cabeçalho, menu, rodapé) são compartilhados por todas as páginas. Mudar esses arquivos muda o site inteiro.
-4. **Novas páginas:** copie uma página existente (ex.: `user/index.html`), mantenha a primeira linha `th:replace="~{layout/base :: layout(...)}"`, crie o método no controlador e adicione a regra de acesso em `SecurityConfig`.
-5. Os templates não contêm regras de segurança: só leem flags simples preparadas em Java (`authenticated`, `canAccessUser` etc.).
-6. Dica: durante o desenvolvimento do tema, rode com `--spring.thymeleaf.cache=false` para ver as mudanças sem reiniciar (`mvn spring-boot:run -Dspring-boot.run.arguments=--spring.thymeleaf.cache=false`).
-7. O CSP só permite CSS e JS do próprio servidor. Se o novo tema usar fontes ou CDNs externos, ajuste a política em `SecurityConfig`.
+Os estilos estão divididos em dois arquivos principais:
 
-## 12. Principais decisões de design
+* `theme.css`: cores, fontes e outras variáveis visuais.
+* `app.css`: estilos dos componentes e das páginas.
 
-- **Sem camadas desnecessárias:** controlador → serviço → repositório; sem interfaces de serviço ou DTOs além do formulário.
-- **Negar por padrão:** qualquer rota nova só funciona depois de ser liberada de forma explícita em `SecurityConfig`.
-- **E-mail como identificador de login**, normalizado, com índice único no banco.
-- **Contas privilegiadas só pelo operador** (variáveis de ambiente ou edição direta no banco), nunca pela interface pública.
-- **Sessões no MongoDB** para sobreviverem a reinícios e permitirem várias instâncias.
-- **Falhas de banco** viram página 503 amigável e log sem dados sensíveis.
-- **Layout Thymeleaf por fragmentos** + CSS com variáveis para troca de tema barata.
+O layout e os fragmentos do Thymeleaf também são compartilhados entre as páginas. Isso facilita modificar a aparência do sistema sem precisar alterar a lógica de autenticação.
 
-## 13. Limitações conhecidas e requisitos para produção
+## Limitações atuais
 
-**Limitações (escopo intencional ou consequência dele):**
-- Sem recuperação de senha, verificação de e-mail, 2FA ou login social.
-- Sem limite de tentativas de login/bloqueio de conta. Em produção, adicione proteção contra força bruta (por exemplo, no proxy/WAF ou com um mecanismo de limitação).
-- O cadastro informa quando um e-mail já existe (necessário para a mensagem clara pedida), o que permite descobrir e-mails cadastrados; sem verificação por e-mail isso é inerente.
-- Não há tela para gerenciar perfis de usuários existentes (use o Atlas).
-- As sessões usam serialização Java: se a classe do principal mudar entre versões, sessões antigas podem ser invalidadas após um deploy.
-- Se o MongoDB cair com a aplicação em execução, o armazenamento de sessões também fica indisponível e as requisições falham até a conexão voltar.
+O projeto atende às funcionalidades previstas para o sistema de login, mas ainda pode receber melhorias. Entre as funcionalidades que não foram incluídas estão recuperação de senha, verificação de e-mail, autenticação em duas etapas e limitação de tentativas de login.
 
-**Para produção:**
-- Rodar atrás de **HTTPS** e usar `SPRING_PROFILES_ACTIVE=prod` (cookie `Secure`, cabeçalhos de proxy). Configure o proxy para enviar `X-Forwarded-Proto`.
-- Guardar `MONGODB_URI` e as credenciais iniciais em um gerenciador de segredos/variáveis da plataforma, nunca no repositório.
-- Atlas: IPs de acesso restritos, usuário de banco com privilégio mínimo, backups ativados, plano adequado (o M0 gratuito é só para desenvolvimento).
-- Remover `BOOTSTRAP_*` após criar as contas iniciais e trocar essas senhas.
-- Manter Spring Boot e dependências atualizados.
-- Monitorar logs (a aplicação não registra senhas, hashes nem e-mails).
+Para utilizar o sistema em produção, é necessário configurar HTTPS, restringir o acesso ao banco, proteger as credenciais e manter as dependências atualizadas.
 
-## 14. Publicando no GitHub
+## Repositório
 
-Confira antes que o `.env` não será enviado (`git status` não deve listá-lo; o `.gitignore` já o ignora).
+O código-fonte, os testes e a documentação estão disponíveis no GitHub:
 
-```bash
-cd login-seguro
-git init
-git add .
-git status                      # confirme: nada de .env nem target/
-git commit -m "Sistema de login seguro com Spring Boot, Thymeleaf e MongoDB Atlas"
-git branch -M main
-
-# Crie o repositório PÚBLICO vazio no GitHub (site: New repository) e então:
-git remote add origin https://github.com/SEU-USUARIO/login-seguro.git
-git push -u origin main
-```
-
-Com a GitHub CLI: `gh repo create login-seguro --public --source=. --remote=origin --push`.
+[LoginSeguro — GitHub](https://github.com/MariaEduardaPaixaoO/Sistema-de-Login-Seguro)
